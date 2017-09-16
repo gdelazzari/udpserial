@@ -36,8 +36,6 @@ func serveWebPanel(wg *sync.WaitGroup) {
 }
 
 func handlerPortsIndex(w http.ResponseWriter, r *http.Request) {
-	logger("webpanel", LogInfo, "requested ports index")
-
 	changingConfig := readConfig(configFilename)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -53,8 +51,6 @@ func handlerPortsIndex(w http.ResponseWriter, r *http.Request) {
 func handlerPortGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	portName := vars["portName"]
-
-	logger("webpanel", LogInfo, "requested config for port "+portName)
 
 	changingConfig := readConfig(configFilename)
 
@@ -196,8 +192,6 @@ func handlerPortDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerFreePortNames(w http.ResponseWriter, r *http.Request) {
-	logger("webpanel", LogInfo, "requested free port names")
-
 	changingConfig := readConfig(configFilename)
 
 	var data []string
@@ -216,8 +210,6 @@ func handlerFreePortNames(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerBaudrates(w http.ResponseWriter, r *http.Request) {
-	logger("webpanel", LogInfo, "requested baudrates list")
-
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
@@ -225,8 +217,6 @@ func handlerBaudrates(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerListenIPs(w http.ResponseWriter, r *http.Request) {
-	logger("webpanel", LogInfo, "requested listen IPs list")
-
 	type IPDescription struct {
 		IP          string `json:"ip"`
 		Description string `json:"description"`
