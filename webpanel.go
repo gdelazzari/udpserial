@@ -18,17 +18,17 @@ func serveWebPanel(wg *sync.WaitGroup) {
 
 	router := mux.NewRouter().StrictSlash(true)
 
-	router.HandleFunc("/ports", handlerPortsIndex).Methods("GET")
-	router.HandleFunc("/ports/{portName}", handlerPortGet).Methods("GET")
-	router.HandleFunc("/ports", handlerPortPost).Methods("POST")
-	router.HandleFunc("/ports/{portName}", handlerPortPut).Methods("PUT")
-	router.HandleFunc("/ports/{portName}", handlerPortDelete).Methods("DELETE")
-	router.HandleFunc("/freePortNames", handlerFreePortNames).Methods("GET")
-	router.HandleFunc("/baudrates", handlerBaudrates).Methods("GET")
-	router.HandleFunc("/listenIPs", handlerListenIPs).Methods("GET")
-	router.HandleFunc("/reloadConfigAndRestartThreads", handlerReloadConfigAndRestartThreads).Methods("GET")
+	router.HandleFunc("/api/ports", handlerPortsIndex).Methods("GET")
+	router.HandleFunc("/api/ports/{portName}", handlerPortGet).Methods("GET")
+	router.HandleFunc("/api/ports", handlerPortPost).Methods("POST")
+	router.HandleFunc("/api/ports/{portName}", handlerPortPut).Methods("PUT")
+	router.HandleFunc("/api/ports/{portName}", handlerPortDelete).Methods("DELETE")
+	router.HandleFunc("/api/freePortNames", handlerFreePortNames).Methods("GET")
+	router.HandleFunc("/api/baudrates", handlerBaudrates).Methods("GET")
+	router.HandleFunc("/api/listenIPs", handlerListenIPs).Methods("GET")
+	router.HandleFunc("/api/reloadConfigAndRestartThreads", handlerReloadConfigAndRestartThreads).Methods("GET")
 
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./panel/")))
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./panel/dist")))
 
 	http.Handle("/", router)
 
@@ -200,9 +200,6 @@ func handlerFreePortNames(w http.ResponseWriter, r *http.Request) {
 
 	changingConfig := readConfig(configFilename)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
 	var data []string
 
 	for _, portDefinition := range definitions.PortDefinitions {
@@ -213,7 +210,7 @@ func handlerFreePortNames(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(data)
 }
@@ -229,9 +226,6 @@ func handlerBaudrates(w http.ResponseWriter, r *http.Request) {
 
 func handlerListenIPs(w http.ResponseWriter, r *http.Request) {
 	logger("webpanel", LogInfo, "requested listen IPs list")
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 
 	type IPDescription struct {
 		IP          string `json:"ip"`
@@ -262,7 +256,7 @@ func handlerListenIPs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(data)
 }
