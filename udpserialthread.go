@@ -133,7 +133,6 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 		defer internalWaitGroup.Done()
 		for {
 			if serial2udpQueue.Empty() == false {
-				fmt.Printf("queued=%d\n", serial2udpQueue.Size())
 				var toSend, assertResult = serial2udpQueue.Dequeue().([]byte)
 				if assertResult == false {
 					logger(name, LogWarning, "serial2udpQueue dequeued a non-[]byte node")
