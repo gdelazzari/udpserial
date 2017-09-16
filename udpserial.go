@@ -2,13 +2,13 @@ package main
 
 import (
 	"sync"
-	"time"
 )
 
 const definitionsFilename = "definitions.json"
 const configFilename = "config.json"
 
 var definitions Definitions
+
 var config Config
 
 func main() {
@@ -21,7 +21,9 @@ func main() {
 	config = readConfig(configFilename)
 	logger("main", LogInfo, "Loaded configuration")
 
-	// TODO check if ports n > 0
+	if len(config.Ports) <= 0 {
+		logger("main", LogWarning, "No ports configured")
+	}
 
 	var waitGroup sync.WaitGroup
 
@@ -31,13 +33,15 @@ func main() {
 	waitGroup.Add(1)
 	go serveWebPanel(&waitGroup)
 
-	time.Sleep(time.Second * 3)
+	/*
+		time.Sleep(time.Second * 3)
 
-	go restartAllThreads()
+		go restartAllThreads()
 
-	time.Sleep(time.Millisecond * 250)
+		time.Sleep(time.Millisecond * 250)
 
-	restartAllThreads()
+		restartAllThreads()
+	*/
 
 	waitGroup.Wait()
 }

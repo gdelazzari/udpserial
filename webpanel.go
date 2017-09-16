@@ -26,7 +26,7 @@ func serveWebPanel(wg *sync.WaitGroup) {
 	router.HandleFunc("/freePortNames", handlerFreePortNames).Methods("GET")
 	router.HandleFunc("/baudrates", handlerBaudrates).Methods("GET")
 	router.HandleFunc("/listenIPs", handlerListenIPs).Methods("GET")
-	router.HandleFunc("/restartThreads", handlerRestartThreads).Methods("GET")
+	router.HandleFunc("/reloadConfigAndRestartThreads", handlerReloadConfigAndRestartThreads).Methods("GET")
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./panel/")))
 
@@ -38,11 +38,13 @@ func serveWebPanel(wg *sync.WaitGroup) {
 func handlerPortsIndex(w http.ResponseWriter, r *http.Request) {
 	logger("webpanel", LogInfo, "requested ports index")
 
+	changingConfig := readConfig(configFilename)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
 	var data []string
-	for _, portConfig := range config.Ports {
+	for _, portConfig := range changingConfig.Ports {
 		data = append(data, portConfig.Name)
 	}
 	json.NewEncoder(w).Encode(data)
@@ -54,10 +56,12 @@ func handlerPortGet(w http.ResponseWriter, r *http.Request) {
 
 	logger("webpanel", LogInfo, "requested config for port "+portName)
 
+	changingConfig := readConfig(configFilename)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
-	data, err := getPortConfig(config, portName)
+	data, err := getPortConfig(changingConfig, portName)
 	if err != nil {
 		json.NewEncoder(w).Encode(nil)
 		return
@@ -87,12 +91,14 @@ func handlerPortPost(w http.ResponseWriter, r *http.Request) {
 
 	logger("webpanel", LogInfo, "posted config for port "+portConfig.Name)
 
-	_, getPortError := getPortConfig(config, portConfig.Name)
+	changingConfig := readConfig(configFilename)
+
+	_, getPortError := getPortConfig(changingConfig, portConfig.Name)
 
 	if getPortError != nil {
-		config.Ports = append(config.Ports, portConfig)
+		changingConfig.Ports = append(changingConfig.Ports, portConfig)
 
-		onConfigChange()
+		changingConfig.saveToFile(configFilename)
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -125,16 +131,27 @@ func handlerPortPut(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(nil)
 		return
 	}
+
+	logger("webpanel", LogInfo, "changing config for port "+portConfig.Name)
+
+	changingConfig := readConfig(configFilename)
+
 	if portConfig.Name != portName {
 		json.NewEncoder(w).Encode(nil)
 		return
 	}
 
-	for i := 0; i < len(config.Ports); i++ {
-		if config.Ports[i].Name == portName {
-			config.Ports[i] = portConfig
-			onConfigChange()
+	for i := 0; i < len(changingConfig.Ports); i++ {
+		if changingConfig.Ports[i].Name == portName {
+			changingConfig.Ports[i] = portConfig
+
+			changingConfig.saveToFile(configFilename)
+
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusCreated)
+
 			json.NewEncoder(w).Encode(portConfig)
+
 			return
 		}
 	}
@@ -147,20 +164,29 @@ func handlerPortDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	portName := vars["portName"]
 
+	logger("webpanel", LogInfo, "deleting config for port "+portName)
+
+	changingConfig := readConfig(configFilename)
+
 	foundIdx := -1
 	foundPortConfig := PortConfig{}
 
-	for i := 0; i < len(config.Ports); i++ {
-		if config.Ports[i].Name == portName {
-			foundPortConfig = config.Ports[i]
+	for i := 0; i < len(changingConfig.Ports); i++ {
+		if changingConfig.Ports[i].Name == portName {
+			foundPortConfig = changingConfig.Ports[i]
 			foundIdx = i
 			break
 		}
 	}
 
 	if foundIdx >= 0 {
-		config.Ports = append(config.Ports[:foundIdx], config.Ports[foundIdx+1:]...)
-		onConfigChange()
+		changingConfig.Ports = append(changingConfig.Ports[:foundIdx], changingConfig.Ports[foundIdx+1:]...)
+
+		changingConfig.saveToFile(configFilename)
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusCreated)
+
 		json.NewEncoder(w).Encode(foundPortConfig)
 		return
 	}
@@ -170,7 +196,9 @@ func handlerPortDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerFreePortNames(w http.ResponseWriter, r *http.Request) {
-	logger("webpanel", LogInfo, "requested ports index")
+	logger("webpanel", LogInfo, "requested free port names")
+
+	changingConfig := readConfig(configFilename)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -178,17 +206,20 @@ func handlerFreePortNames(w http.ResponseWriter, r *http.Request) {
 	var data []string
 
 	for _, portDefinition := range definitions.PortDefinitions {
-		_, getPortError := getPortConfig(config, portDefinition.PortName)
+		_, getPortError := getPortConfig(changingConfig, portDefinition.PortName)
 		if getPortError != nil {
 			data = append(data, portDefinition.PortName)
 		}
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+
 	json.NewEncoder(w).Encode(data)
 }
 
 func handlerBaudrates(w http.ResponseWriter, r *http.Request) {
-	logger("webpanel", LogInfo, "requested ports index")
+	logger("webpanel", LogInfo, "requested baudrates list")
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -197,7 +228,7 @@ func handlerBaudrates(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerListenIPs(w http.ResponseWriter, r *http.Request) {
-	logger("webpanel", LogInfo, "requested ports index")
+	logger("webpanel", LogInfo, "requested listen IPs list")
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -230,11 +261,16 @@ func handlerListenIPs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+
 	json.NewEncoder(w).Encode(data)
 }
 
-func handlerRestartThreads(w http.ResponseWriter, r *http.Request) {
+func handlerReloadConfigAndRestartThreads(w http.ResponseWriter, r *http.Request) {
 	logger("webpanel", LogInfo, "requested threads restart")
+
+	config = readConfig(configFilename)
 
 	restartAllThreads()
 
@@ -242,8 +278,4 @@ func handlerRestartThreads(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(nil)
-}
-
-func onConfigChange() {
-	config.saveToFile(configFilename)
 }

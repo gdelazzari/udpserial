@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"sync"
 	"time"
 )
@@ -40,7 +41,7 @@ func startAndSuperviseThreads(wg *sync.WaitGroup) {
 		if doNotRestart == false {
 			portConfig, err := getPortConfig(config, diedPortName)
 			if err != nil {
-				logger("supervisor", LogFatal, err)
+				logger("supervisor", LogError, err)
 			}
 
 			// Relaunch thread
@@ -66,9 +67,11 @@ func stopAllThreads() {
 
 	mustDie := len(killChannels)
 
-	for _, portConfig := range config.Ports {
+	logger("supervisor", LogInfo, "Waiting for "+strconv.Itoa(mustDie)+" threads to stop")
+
+	for portName := range killChannels {
 		select {
-		case killChannels[portConfig.Name] <- true:
+		case killChannels[portName] <- true:
 		case <-time.After(1*time.Second + time.Millisecond*250):
 		}
 	}

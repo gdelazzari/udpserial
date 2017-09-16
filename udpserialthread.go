@@ -141,8 +141,8 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					_, _, err = udpOutputConnection.WriteMsgUDP(toSend, nil, nil)
 					if err != nil {
 						// TODO do not repeat error for every packet
-						logger(name, LogWarning, err)
-						fmt.Printf("Refused for packet %q\n", toSend)
+						// logger(name, LogWarning, err)
+						fmt.Printf("UDP refused for packet %q\n", toSend)
 					} else {
 						fmt.Printf("UDP sent for packet %q\n", toSend)
 					}
