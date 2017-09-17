@@ -27,7 +27,7 @@ export default Line.extend({
   },
   mounted() {
     this.renderChart(this.datacollection, {responsive: true, maintainAspectRatio: false, animation: {easing: 'easeOutQuint'}})
-    this.updater = setInterval(this.appendValue, 1000)
+    this.updater = setInterval(this.updateStatistics, 1000)
   },
   destroyed() {
     clearInterval(this.updater)
@@ -37,7 +37,7 @@ export default Line.extend({
     getRandomInt() {
       return Math.floor(Math.random() * (50))
     },
-    appendValue() {
+    updateStatistics() {
       if (this._chart.ctx == null) {
         clearInterval(this.updater)
         return

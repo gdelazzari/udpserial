@@ -14,6 +14,18 @@ var diedCount int
 
 var restarting bool
 
+func rebuildStatistics() {
+	statistics.PortsMutex.Lock()
+
+	statistics.Ports = make(map[string]*PortStatistics)
+
+	for _, portConfig := range config.Ports {
+		statistics.Ports[portConfig.Name] = &PortStatistics{}
+	}
+
+	statistics.PortsMutex.Unlock()
+}
+
 func startAndSuperviseThreads(wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -26,10 +38,12 @@ func startAndSuperviseThreads(wg *sync.WaitGroup) {
 	stopChannel = make(chan string)
 	killChannels = make(map[string](chan bool))
 
+	rebuildStatistics()
+
 	for _, portConfig := range config.Ports {
 		name := "UDPSerialThread_" + portConfig.Name
 		killChannels[portConfig.Name] = make(chan bool)
-		go UDPSerialThread(name, portConfig, stopChannel, killChannels[portConfig.Name])
+		go UDPSerialThread(name, portConfig, stopChannel, killChannels[portConfig.Name], statistics.Ports[portConfig.Name])
 	}
 
 	// Start supervising
@@ -47,7 +61,7 @@ func startAndSuperviseThreads(wg *sync.WaitGroup) {
 			// Relaunch thread
 			name := "UDPSerialThread_" + portConfig.Name
 			killChannels[portConfig.Name] = make(chan bool)
-			go UDPSerialThread(name, portConfig, stopChannel, killChannels[portConfig.Name])
+			go UDPSerialThread(name, portConfig, stopChannel, killChannels[portConfig.Name], statistics.Ports[portConfig.Name])
 
 			// Wait a bit
 			time.Sleep(time.Second * 1)
@@ -102,11 +116,12 @@ func restartAllThreads() {
 	logger("supervisor", LogInfo, "Restarting threads")
 
 	killChannels = make(map[string](chan bool))
+	rebuildStatistics()
 
 	for _, portConfig := range config.Ports {
 		name := "UDPSerialThread_" + portConfig.Name
 		killChannels[portConfig.Name] = make(chan bool)
-		go UDPSerialThread(name, portConfig, stopChannel, killChannels[portConfig.Name])
+		go UDPSerialThread(name, portConfig, stopChannel, killChannels[portConfig.Name], statistics.Ports[portConfig.Name])
 	}
 
 	restarting = false

@@ -8,8 +8,9 @@ const definitionsFilename = "definitions.json"
 const configFilename = "config.json"
 
 var definitions Definitions
-
 var config Config
+
+var statistics Statistics
 
 func main() {
 	initLogger()
@@ -32,6 +33,9 @@ func main() {
 
 	waitGroup.Add(1)
 	go serveWebPanel(&waitGroup)
+
+	waitGroup.Add(1)
+	go statisticsThread(&waitGroup, &statistics)
 
 	/*
 		time.Sleep(time.Second * 3)

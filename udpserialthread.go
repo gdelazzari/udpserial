@@ -13,7 +13,7 @@ import (
 )
 
 // UDPSerialThread : start a loop for a specified port
-func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string, killChannel chan bool) {
+func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string, killChannel chan bool, stats *PortStatistics) {
 	defer func() { stopChannel <- portConfig.Name }()
 
 	logger(name, LogInfo, "Starting thread")
@@ -24,6 +24,8 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	ttyName, err := getPortTTY(definitions, portConfig.Name)
 	if err != nil {
 		logger(name, LogError, err)
+		stats.Errors++
+		return
 	}
 
 	// Serial port configuration
@@ -40,6 +42,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	udpInputAddress, err := net.ResolveUDPAddr("udp", portConfig.UDPInputIP+":"+strconv.Itoa(portConfig.UDPInputPort))
 	if err != nil {
 		logger(name, LogError, err)
+		stats.Errors++
 		return
 	}
 
@@ -47,6 +50,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	udpOutputAddress, err := net.ResolveUDPAddr("udp", portConfig.UDPOutputIP+":"+strconv.Itoa(portConfig.UDPOutputPort))
 	if err != nil {
 		logger(name, LogError, err)
+		stats.Errors++
 		return
 	}
 
@@ -54,6 +58,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	serialPort, err := serial.Open(serialPortOptions)
 	if err != nil {
 		logger(name, LogError, err)
+		stats.Errors++
 		return
 	}
 	logger(name, LogInfo, "Opened "+serialPortOptions.PortName)
@@ -63,6 +68,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	udpInputConnection, err := net.ListenUDP("udp", udpInputAddress)
 	if err != nil {
 		logger(name, LogError, err)
+		stats.Errors++
 		return
 	}
 	logger(name, LogInfo, "Listening on "+udpInputAddress.String())
@@ -72,6 +78,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	udpOutputConnection, err := net.DialUDP("udp", nil, udpOutputAddress)
 	if err != nil {
 		logger(name, LogError, err)
+		stats.Errors++
 		return
 	}
 	logger(name, LogInfo, "Sending to "+udpOutputAddress.String())
@@ -95,6 +102,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 				logger(name, LogWarning, err)
 			} else {
 				fmt.Println("[", name, "] UDP: ", string(udpBuffer[0:readLength]), " from ", readAddr)
+				stats.UDP2SerialCounter += readLength
 				go func() {
 					_, err = serialPort.Write(udpBuffer[:readLength])
 					if err != nil {
@@ -121,6 +129,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					logger(name, LogWarning, err)
 				}
 			} else {
+				stats.Serial2UDPCounter += readLength
 				fmt.Printf("Serial: %q\n", serialBuffer[:readLength])
 				serial2udpQueue.Enqueue(serialBuffer[:readLength])
 			}
@@ -146,6 +155,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 						// TODO do not repeat error for every packet
 						// logger(name, LogWarning, err)
 						fmt.Printf("UDP refused for packet %q\n", toSend)
+						stats.LostPackets++
 					} else {
 						fmt.Printf("UDP sent for packet %q\n", toSend)
 					}
