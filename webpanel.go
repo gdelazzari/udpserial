@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -24,6 +25,7 @@ func serveWebPanel(wg *sync.WaitGroup) {
 	router.HandleFunc("/api/ports/{portName}", handlerPortPut).Methods("PUT")
 	router.HandleFunc("/api/ports/{portName}", handlerPortDelete).Methods("DELETE")
 	router.HandleFunc("/api/statistics", handlerStatistics).Methods("GET")
+	router.HandleFunc("/api/systemLog", handlerSystemLog).Methods("GET")
 	router.HandleFunc("/api/freePortNames", handlerFreePortNames).Methods("GET")
 	router.HandleFunc("/api/baudrates", handlerBaudrates).Methods("GET")
 	router.HandleFunc("/api/listenIPs", handlerListenIPs).Methods("GET")
@@ -271,6 +273,13 @@ func handlerStatistics(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(getPublicStatistics(&statistics))
+}
+
+func handlerSystemLog(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprint(w, getLogString())
 }
 
 func answerError(w *http.ResponseWriter) {

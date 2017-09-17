@@ -1,0 +1,22 @@
+2017/09/17 15:34:50 [main] [INFO] Loaded definitions
+2017/09/17 15:34:50 [main] [INFO] Loaded configuration
+2017/09/17 15:34:50 [supervisor] [INFO] Starting threads
+2017/09/17 15:34:50 [UDPSerialThread_ACM-1] [INFO] Starting thread
+2017/09/17 15:34:50 [UDPSerialThread_RS232-1] [INFO] Starting thread
+2017/09/17 15:34:50 [webpanel] [INFO] starting web server
+2017/09/17 15:34:50 [UDPSerialThread_TTL-1] [INFO] Starting thread
+2017/09/17 15:34:50 [UDPSerialThread_RS232-1] [INFO] Opened /dev/ttyS0
+2017/09/17 15:34:50 [UDPSerialThread_RS232-1] [INFO] Listening on 0.0.0.0:5002
+2017/09/17 15:34:50 [UDPSerialThread_RS232-1] [INFO] Sending to 127.0.0.1:5000
+2017/09/17 15:34:50 [UDPSerialThread_ACM-1] [INFO] Opened /dev/ttyACM0
+2017/09/17 15:34:50 [UDPSerialThread_ACM-1] [INFO] Listening on 0.0.0.0:4999
+2017/09/17 15:34:50 [UDPSerialThread_ACM-1] [INFO] Sending to 127.0.0.1:4999
+2017/09/17 15:34:50 [UDPSerialThread_TTL-1] [INFO] Opened /dev/ttyUSB0
+2017/09/17 15:34:50 [UDPSerialThread_TTL-1] [INFO] Listening on 0.0.0.0:5000
+2017/09/17 15:34:50 [UDPSerialThread_TTL-1] [INFO] Sending to 127.0.0.1:5000
+2017/09/17 15:34:51 [webpanel] [INFO] requested statistics
+2017/09/17 15:34:51 [webpanel] [INFO] done
+2017/09/17 15:34:52 [webpanel] [INFO] requested statistics
+2017/09/17 15:34:52 [webpanel] [INFO] done
+2017/09/17 15:34:53 [webpanel] [INFO] requested statistics
+2017/09/17 15:34:53 [webpanel] [INFO] done

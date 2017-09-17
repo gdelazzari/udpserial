@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 )
@@ -19,6 +20,8 @@ const (
 
 func initLogger() {
 	var err error
+	_ = os.Remove("udpserial.log.bak")
+	_ = os.Rename("udpserial.log", "udpserial.log.bak")
 	logFile, err = os.OpenFile("udpserial.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -42,6 +45,15 @@ func logger(source string, level int, content interface{}) {
 	case LogPanic:
 		log.Panicln(("[" + source + "]"), "[PANIC]", content)
 	}
+}
+
+func getLogString() string {
+	bytes, err := ioutil.ReadFile("udpserial.log")
+	if err != nil {
+		logger("logger", LogError, err)
+		return ""
+	}
+	return string(bytes)
 }
 
 func closeLogger() {
