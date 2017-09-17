@@ -1,16 +1,27 @@
 <template>
   <div class="statistics">
-
+    <h2>Live transmission rates</h2>
+    <portrategraph></portrategraph>
   </div>
 </template>
 
 <script>
+import PortRateGraph from '@/components/PortRateGraph'
+
 export default {
   name: 'statistics',
+  components: {
+    'portrategraph': PortRateGraph
+  },
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+
     }
+  },
+  mounted () {
+  },
+  methods: {
+
   }
 }
 </script>
