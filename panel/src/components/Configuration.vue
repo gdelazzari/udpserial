@@ -1,5 +1,6 @@
 <template>
   <div class="configuration">
+    <button class="uk-button uk-button-secondary" @click="onBtnApply()" style="float: right" :disabled="reloading == true">Apply configuration</button>
     <h2>Configured ports</h2>
     <ul class="uk-list uk-list-large uk-list-striped">
       <li v-for="port in ports">
@@ -19,7 +20,8 @@ export default {
   name: 'configuration',
   data () {
     return {
-      ports: []
+      ports: [],
+      reloading: false
     }
   },
   created () {
@@ -33,6 +35,12 @@ export default {
     },
     onBtnEdit(name) {
       this.$router.push("/configuration/edit/" + name)
+    },
+    onBtnApply() {
+      this.reloading = true
+      this.$http.get('/api/reloadConfigAndRestartThreads').then(response => {
+        this.reloading = false
+      })
     },
     loadList() {
       this.$http.get('/api/ports').then(response => {

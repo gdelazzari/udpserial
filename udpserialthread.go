@@ -28,11 +28,12 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 
 	// Serial port configuration
 	serialPortOptions := serial.OpenOptions{
-		PortName:        ttyName,
-		BaudRate:        portConfig.BaudRate,
-		DataBits:        portConfig.DataBits,
-		StopBits:        portConfig.StopBits,
-		MinimumReadSize: 1,
+		PortName:              ttyName,
+		BaudRate:              portConfig.BaudRate,
+		DataBits:              portConfig.DataBits,
+		StopBits:              portConfig.StopBits,
+		MinimumReadSize:       0,
+		InterCharacterTimeout: 100,
 	}
 
 	// UDP Input Address
@@ -93,7 +94,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 			if err != nil {
 				logger(name, LogWarning, err)
 			} else {
-				fmt.Println("UDP: ", string(udpBuffer[0:readLength]), " from ", readAddr)
+				fmt.Println("[", name, "] UDP: ", string(udpBuffer[0:readLength]), " from ", readAddr)
 				go func() {
 					_, err = serialPort.Write(udpBuffer[:readLength])
 					if err != nil {
@@ -115,8 +116,10 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 		var readLength int
 		for {
 			readLength, err = serialPort.Read(serialBuffer)
-			if err == io.EOF {
-				logger(name, LogWarning, err)
+			if err != nil {
+				if err != io.EOF {
+					logger(name, LogWarning, err)
+				}
 			} else {
 				fmt.Printf("Serial: %q\n", serialBuffer[:readLength])
 				serial2udpQueue.Enqueue(serialBuffer[:readLength])
