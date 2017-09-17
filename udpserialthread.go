@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -95,13 +94,13 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	go func() {
 		defer internalWaitGroup.Done()
 		var readLength int
-		var readAddr *net.UDPAddr
+		//var readAddr *net.UDPAddr
 		for {
-			readLength, readAddr, err = udpInputConnection.ReadFromUDP(udpBuffer)
+			readLength, _, err = udpInputConnection.ReadFromUDP(udpBuffer)
 			if err != nil {
 				logger(name, LogWarning, err)
 			} else {
-				fmt.Println("[", name, "] UDP: ", string(udpBuffer[0:readLength]), " from ", readAddr)
+				//fmt.Println("[", name, "] UDP: ", string(udpBuffer[0:readLength]), " from ", readAddr)
 				stats.UDP2SerialCounter += readLength
 				go func() {
 					_, err = serialPort.Write(udpBuffer[:readLength])
@@ -130,7 +129,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 				}
 			} else {
 				stats.Serial2UDPCounter += readLength
-				fmt.Printf("Serial: %q\n", serialBuffer[:readLength])
+				//fmt.Printf("Serial: %q\n", serialBuffer[:readLength])
 				serial2udpQueue.Enqueue(serialBuffer[:readLength])
 			}
 			if running == false {
@@ -154,10 +153,10 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					if err != nil {
 						// TODO do not repeat error for every packet
 						// logger(name, LogWarning, err)
-						fmt.Printf("UDP refused for packet %q\n", toSend)
+						//fmt.Printf("UDP refused for packet %q\n", toSend)
 						stats.LostPackets++
 					} else {
-						fmt.Printf("UDP sent for packet %q\n", toSend)
+						//fmt.Printf("UDP sent for packet %q\n", toSend)
 					}
 				}
 			}
