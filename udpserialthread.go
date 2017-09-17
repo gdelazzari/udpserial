@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -33,6 +34,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 		BaudRate: portConfig.BaudRate,
 		DataBits: portConfig.DataBits,
 		StopBits: portConfig.StopBits,
+		Parity:   "N",
 		Timeout:  100 * time.Millisecond,
 	}
 
@@ -86,6 +88,15 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	var serialBuffer = make([]byte, 1024)
 
 	var serial2udpQueue = lane.NewQueue()
+	defer func() {
+		for {
+			if serial2udpQueue.Empty() == false {
+				serial2udpQueue.Dequeue()
+			} else {
+				break
+			}
+		}
+	}()
 
 	var internalWaitGroup sync.WaitGroup
 
@@ -129,9 +140,11 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					logger(name, LogWarning, err)
 				}
 			} else {
-				stats.Serial2UDPCounter += readLength
-				//fmt.Printf("Serial: %q\n", serialBuffer[:readLength])
-				serial2udpQueue.Enqueue(serialBuffer[:readLength])
+				if readLength > 0 {
+					stats.Serial2UDPCounter += readLength
+					fmt.Printf("Serial: %q\n", serialBuffer[:readLength])
+					serial2udpQueue.Enqueue(serialBuffer[:readLength])
+				}
 			}
 			if running == false {
 				logger(name, LogInfo, "serial2udpqueue subthread stopped")
@@ -154,10 +167,10 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					if err != nil {
 						// TODO do not repeat error for every packet
 						// logger(name, LogWarning, err)
-						//fmt.Printf("UDP refused for packet %q\n", toSend)
+						fmt.Printf("UDP refused for packet %q\n", toSend)
 						stats.LostPackets++
 					} else {
-						//fmt.Printf("UDP sent for packet %q\n", toSend)
+						fmt.Printf("UDP sent for packet %q\n", toSend)
 					}
 				}
 			}
