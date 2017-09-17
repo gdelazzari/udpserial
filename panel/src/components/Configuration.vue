@@ -5,8 +5,8 @@
       <li v-for="port in ports">
         {{ port }}
         <div class="list-buttons">
-          <button class="uk-button uk-button-default uk-button-small">Edit</button>
-          <button class="uk-button uk-button-danger uk-button-small">Unlink</button>
+          <button class="uk-button uk-button-default uk-button-small" @click="onBtnEdit(port)">Edit</button>
+          <button class="uk-button uk-button-danger uk-button-small" @click="onBtnUnlink(port)">Unlink</button>
         </div>
       </li>
     </ul>
@@ -23,10 +23,22 @@ export default {
     }
   },
   created () {
-    this.$http.get('/api/ports')
-      .then(response => {
-        this.ports = response.data;
+    this.loadList()
+  },
+  methods: {
+    onBtnUnlink(name) {
+      this.$http.delete('/api/ports/' + name).then(response => {
+        this.loadList()
       })
+    },
+    onBtnEdit(name) {
+      this.$router.push("/configuration/edit/" + name)
+    },
+    loadList() {
+      this.$http.get('/api/ports').then(response => {
+        this.ports = response.data
+      })
+    }
   }
 }
 </script>

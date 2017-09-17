@@ -59,7 +59,7 @@ func handlerPortGet(w http.ResponseWriter, r *http.Request) {
 
 	data, err := getPortConfig(changingConfig, portName)
 	if err != nil {
-		json.NewEncoder(w).Encode(nil)
+		answerError(&w)
 		return
 	}
 
@@ -71,11 +71,11 @@ func handlerPortPost(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
-		json.NewEncoder(w).Encode(nil)
+		answerError(&w)
 		return
 	}
 	if err := r.Body.Close(); err != nil {
-		json.NewEncoder(w).Encode(nil)
+		answerError(&w)
 		return
 	}
 	if err := json.Unmarshal(body, &portConfig); err != nil {
@@ -100,9 +100,10 @@ func handlerPortPost(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 
 		json.NewEncoder(w).Encode(portConfig)
+		return
 	}
 
-	json.NewEncoder(w).Encode(nil)
+	answerError(&w)
 	return
 }
 
@@ -114,11 +115,11 @@ func handlerPortPut(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
-		json.NewEncoder(w).Encode(nil)
+		answerError(&w)
 		return
 	}
 	if err := r.Body.Close(); err != nil {
-		json.NewEncoder(w).Encode(nil)
+		answerError(&w)
 		return
 	}
 	if err := json.Unmarshal(body, &portConfig); err != nil {
@@ -133,7 +134,7 @@ func handlerPortPut(w http.ResponseWriter, r *http.Request) {
 	changingConfig := readConfig(configFilename)
 
 	if portConfig.Name != portName {
-		json.NewEncoder(w).Encode(nil)
+		answerError(&w)
 		return
 	}
 
@@ -152,7 +153,7 @@ func handlerPortPut(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	json.NewEncoder(w).Encode(nil)
+	answerError(&w)
 	return
 }
 
@@ -187,7 +188,7 @@ func handlerPortDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(nil)
+	answerError(&w)
 	return
 }
 
@@ -262,4 +263,11 @@ func handlerReloadConfigAndRestartThreads(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(nil)
+}
+
+func answerError(w *http.ResponseWriter) {
+	(*w).Header().Set("Content-Type", "application/json; charset=UTF-8")
+	(*w).WriteHeader(http.StatusCreated)
+
+	json.NewEncoder(*w).Encode(nil)
 }

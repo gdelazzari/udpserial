@@ -1,8 +1,8 @@
 <template>
-  <div class="addport">
-    <h2>Add new port configuration</h2>
+  <div class="editport">
+    <h2>Edit port configuration</h2>
 
-    <porteditor :editing="false" :onConfirm="onEditorConfirm" :onCancel="onEditorCancel"></porteditor>
+    <porteditor :editing="true" :portName="$route.params.name" :onConfirm="onEditorConfirm" :onCancel="onEditorCancel"></porteditor>
   </div>
 </template>
 
@@ -10,7 +10,7 @@
 import PortEditor from '@/components/PortEditor'
 
 export default {
-  name: 'addport',
+  name: 'editport',
   components: {
     'porteditor': PortEditor
   },
@@ -27,7 +27,7 @@ export default {
       this.$router.push("/configuration")
     },
     onEditorConfirm(portConfig) {
-      this.$http.post('/api/ports', portConfig).then(response => {
+      this.$http.put('/api/ports/' + this.$route.params.name, portConfig).then(response => {
         if (response.data != null) {
           this.$router.push("/configuration")
         }
