@@ -5,7 +5,7 @@ import App from './App'
 import router from './router'
 import VueResource from 'vue-resource'
 
-import UIkit from 'uikit';
+import UIkit from 'uikit'
 require("uikit/dist/css/uikit.min.css")
 
 Vue.use(VueResource);
