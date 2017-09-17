@@ -2,3 +2,4 @@ udpserial
 config.json
 definitions.json
 udpserial.log
+udpserial.log.bak

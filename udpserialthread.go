@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jacobsa/go-serial/serial"
+	"github.com/goburrow/serial"
 	"github.com/oleiade/lane"
 )
 
@@ -28,13 +28,12 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	}
 
 	// Serial port configuration
-	serialPortOptions := serial.OpenOptions{
-		PortName:              ttyName,
-		BaudRate:              portConfig.BaudRate,
-		DataBits:              portConfig.DataBits,
-		StopBits:              portConfig.StopBits,
-		MinimumReadSize:       0,
-		InterCharacterTimeout: 100,
+	serialPortOptions := serial.Config{
+		Address:  ttyName,
+		BaudRate: portConfig.BaudRate,
+		DataBits: portConfig.DataBits,
+		StopBits: portConfig.StopBits,
+		Timeout:  100 * time.Millisecond,
 	}
 
 	// UDP Input Address
@@ -54,13 +53,13 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	}
 
 	// Open serial port
-	serialPort, err := serial.Open(serialPortOptions)
+	serialPort, err := serial.Open(&serialPortOptions)
 	if err != nil {
 		logger(name, LogError, err)
 		stats.Errors++
 		return
 	}
-	logger(name, LogInfo, "Opened "+serialPortOptions.PortName)
+	logger(name, LogInfo, "Opened "+ttyName)
 	defer serialPort.Close()
 
 	// Open UDP input connection
@@ -107,6 +106,8 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					if err != nil {
 						// TODO do not repeat error for every packet
 						logger(name, LogWarning, err)
+					} else {
+						//fmt.Println(name, "wrote to serial port")
 					}
 				}()
 			}
@@ -124,7 +125,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 		for {
 			readLength, err = serialPort.Read(serialBuffer)
 			if err != nil {
-				if err != io.EOF {
+				if err != io.EOF && err != serial.ErrTimeout {
 					logger(name, LogWarning, err)
 				}
 			} else {

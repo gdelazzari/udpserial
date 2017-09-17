@@ -9,9 +9,9 @@ import (
 // PortConfig : structure holding a port configuration parameters
 type PortConfig struct {
 	Name            string `json:"name"`
-	BaudRate        uint   `json:"baudrate"`
-	DataBits        uint   `json:"databits"`
-	StopBits        uint   `json:"stopbits"`
+	BaudRate        int    `json:"baudrate"`
+	DataBits        int    `json:"databits"`
+	StopBits        int    `json:"stopbits"`
 	PacketSeparator string `json:"packetSeparator"`
 	UDPInputIP      string `json:"udpInputIP"`
 	UDPInputPort    int    `json:"udpInputPort"`

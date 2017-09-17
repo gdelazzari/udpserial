@@ -4,6 +4,8 @@ import (
 	"sync"
 )
 
+import _ "net/http/pprof"
+
 const definitionsFilename = "definitions.json"
 const configFilename = "config.json"
 
