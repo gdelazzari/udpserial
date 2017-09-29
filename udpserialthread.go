@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"sync"
@@ -9,6 +10,8 @@ import (
 	"github.com/goburrow/serial"
 	"github.com/oleiade/lane"
 )
+
+const PrintDebug = false
 
 func findPacketSeparator(buffer []byte, separator string) int {
 	for i, b := range buffer {
@@ -126,15 +129,22 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 			if err != nil {
 				logger(name, LogWarning, err)
 			} else {
-				//fmt.Println("[", name, "] UDP: ", string(udpBuffer[0:readLength]), " from ", readAddr)
 				stats.UDP2SerialCounter += readLength
+				if PrintDebug {
+					fmt.Println("UDP in ", string(udpBuffer[0:readLength]))
+				}
 				go func() {
+					if PrintDebug {
+						fmt.Println("writing to serial port")
+					}
 					_, err = serialPort.Write(udpBuffer[:readLength])
 					if err != nil {
 						// TODO do not repeat error for every packet
 						logger(name, LogWarning, err)
 					} else {
-						//fmt.Println(name, "wrote to serial port")
+						if PrintDebug {
+							fmt.Println(name, "wrote to serial port")
+						}
 					}
 				}()
 			}
@@ -184,7 +194,9 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					//fmt.Printf("Serial: %q\n", tempSerialBuffer[:readLength])
 					if (serialBufferContentSize + readLength) >= len(serialBuffer) {
 						serial2udpQueue.Enqueue(serialBuffer[:serialBufferContentSize])
-						//fmt.Printf("Ready out %q\n", serialBuffer[:serialBufferContentSize])
+						if PrintDebug {
+							fmt.Printf("Ready out %q\n", serialBuffer[:serialBufferContentSize])
+						}
 						stats.Serial2UDPCounter += serialBufferContentSize
 						serialBufferContentSize = 0
 					}
@@ -194,9 +206,13 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 				} else {
 					if serialBufferContentSize > 0 {
 						serial2udpQueue.Enqueue(serialBuffer[:serialBufferContentSize])
-						//fmt.Printf("Ready out %q\n", serialBuffer[:serialBufferContentSize])
+						if PrintDebug {
+							fmt.Printf("Ready out %q\n", serialBuffer[:serialBufferContentSize])
+						}
 						stats.Serial2UDPCounter += serialBufferContentSize
 						serialBufferContentSize = 0
+					} else {
+						time.Sleep(2 * time.Millisecond)
 					}
 				}
 			}
@@ -216,16 +232,21 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 				if assertResult == false {
 					logger(name, LogWarning, "serial2udpQueue dequeued a non-[]byte node")
 				} else {
-					//fmt.Printf("UDP out %q\n", toSend)
-					//_, err = udpOutputConnection.Write(toSend)
+					if PrintDebug {
+						fmt.Println("UDP out ", toSend)
+					}
 					_, err = udpOutputConnection.Write(toSend)
 					if err != nil {
 						// TODO do not repeat error for every packet
 						// logger(name, LogWarning, err)
-						//fmt.Printf("UDP refused for packet %q\n", toSend)
+						if PrintDebug {
+							fmt.Printf("UDP refused for packet %q\n", toSend)
+						}
 						stats.LostPackets++
 					} else {
-						//fmt.Printf("UDP sent for packet %q\n", toSend)
+						if PrintDebug {
+							fmt.Printf("UDP sent for packet %q\n", toSend)
+						}
 					}
 				}
 			}
@@ -233,7 +254,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 				logger(name, LogInfo, "udpqueue2udp subthread stopped")
 				break
 			}
-			time.Sleep(time.Millisecond * 1)
+			time.Sleep(time.Millisecond * 5)
 		}
 	}()
 
