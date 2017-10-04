@@ -39,15 +39,5 @@ func main() {
 	waitGroup.Add(1)
 	go statisticsThread(&waitGroup, &statistics)
 
-	/*
-		time.Sleep(time.Second * 3)
-
-		go restartAllThreads()
-
-		time.Sleep(time.Millisecond * 250)
-
-		restartAllThreads()
-	*/
-
 	waitGroup.Wait()
 }
