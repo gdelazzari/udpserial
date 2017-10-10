@@ -8,9 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goburrow/serial"
+	"github.com/jacobsa/go-serial/serial"
 )
 
+// PrintDebug : print debug information while running
 const PrintDebug = false
 
 func findPacketSeparator(buffer []byte, separator string) int {
@@ -48,13 +49,13 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	}
 
 	// Serial port configuration
-	serialPortOptions := serial.Config{
-		Address:  ttyName,
-		BaudRate: portConfig.BaudRate,
-		DataBits: portConfig.DataBits,
-		StopBits: portConfig.StopBits,
-		Parity:   "N",
-		Timeout:  4 * time.Millisecond,
+	serialPortOptions := serial.OpenOptions{
+		PortName:              ttyName,
+		BaudRate:              uint(portConfig.BaudRate),
+		DataBits:              uint(portConfig.DataBits),
+		StopBits:              uint(portConfig.StopBits),
+		MinimumReadSize:       0,
+		InterCharacterTimeout: 100,
 	}
 
 	// UDP Input Address
@@ -69,7 +70,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	udpOutputAddress := portConfig.UDPOutputIP + ":" + strconv.Itoa(portConfig.UDPOutputPort)
 
 	// Open serial port
-	serialPort, err := serial.Open(&serialPortOptions)
+	serialPort, err := serial.Open(serialPortOptions)
 	if err != nil {
 		logger(name, LogError, err)
 		stats.Errors++
@@ -103,18 +104,8 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	var serialBufferContentSize = 0
 
 	var serial2udpChannel = make(chan []byte, 64)
-	/*
-		var serial2udpQueue = lane.NewQueue()
-		defer func() {
-			for {
-				if serial2udpQueue.Empty() == false {
-					serial2udpQueue.Dequeue()
-				} else {
-					break
-				}
-			}
-		}()
-	*/
+
+	var serialChannel = make(chan byte, 1024)
 
 	var internalWaitGroup sync.WaitGroup
 
@@ -157,35 +148,53 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 	internalWaitGroup.Add(1)
 	go func() {
 		defer internalWaitGroup.Done()
-		separator := parsePacketSeparator(portConfig.PacketSeparator)
-		var readLength int
-		tempSerialBuffer := make([]byte, 1)
+
+		tempSerialBuffer := make([]byte, 256)
+
 		for {
-			readLength, err = serialPort.Read(tempSerialBuffer)
-			if err != serial.ErrTimeout && err != nil {
-				logger(name, LogWarning, err)
-			} else {
-				packetOut := false
-				if readLength > 0 {
-					serialBuffer[serialBufferContentSize] = tempSerialBuffer[0]
-					serialBufferContentSize++
-					if serialBufferContentSize >= len(serialBuffer) {
-						packetOut = true
-					}
-					if (portConfig.PacketSeparator != "") && (string(tempSerialBuffer[0]) == separator) {
-						if PrintDebug {
-							fmt.Println("Hit separator")
-						}
-						packetOut = true
-					}
-				} else {
-					if serialBufferContentSize > 0 {
-						packetOut = true
-					}
-					time.Sleep(time.Nanosecond * 100)
+			readLength, err := serialPort.Read(tempSerialBuffer)
+
+			if err == nil && readLength > 0 {
+				for _, b := range tempSerialBuffer[:readLength] {
+					serialChannel <- b
 				}
-				if packetOut == true {
-					//serial2udpQueue.Enqueue(serialBuffer[:serialBufferContentSize])
+			}
+
+			if running == false {
+				logger(name, LogInfo, "serialReader subthread stopped")
+				break
+			}
+		}
+	}()
+
+	internalWaitGroup.Add(1)
+	go func() {
+		defer internalWaitGroup.Done()
+		separator := parsePacketSeparator(portConfig.PacketSeparator)
+		for {
+			packetOut := false
+
+			// Timeout read from serialChannel (for an incoming serial byte)
+			select {
+			case incoming := <-serialChannel:
+				serialBuffer[serialBufferContentSize] = incoming
+				serialBufferContentSize++
+				if serialBufferContentSize >= len(serialBuffer) {
+					packetOut = true
+				}
+				if (portConfig.PacketSeparator != "") && (string(incoming) == separator) {
+					if PrintDebug {
+						fmt.Println("Hit separator")
+					}
+					packetOut = true
+				}
+			case <-time.After(5 * time.Millisecond):
+				// If nothing arrives within the specified time, flush out the buffer to UDP
+				packetOut = true
+			}
+
+			if packetOut == true {
+				if serialBufferContentSize > 0 {
 					serial2udpChannel <- serialBuffer[:serialBufferContentSize]
 					stats.Serial2UDPCounter += serialBufferContentSize
 					sizebefore := serialBufferContentSize
@@ -195,6 +204,7 @@ func UDPSerialThread(name string, portConfig PortConfig, stopChannel chan string
 					}
 				}
 			}
+
 			if running == false {
 				logger(name, LogInfo, "serial2udpqueue subthread stopped")
 				break
