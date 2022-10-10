@@ -1,10 +1,10 @@
 # udpserial
 
-[![Animated demo](https://raw.githubusercontent.com/gdelazzari/udpserial/master/assets/demo.mp4)](https://raw.githubusercontent.com/gdelazzari/udpserial/master/assets/demo.mp4)
-
 An UDP to serial port bridge.
 
-Allows to tunnel serial ports through UDP packets, i.e. the packets received by UDP will be outputted as serial data and (viceversa) incoming serial data is sent by UDP.
+Allows to tunnel serial ports through UDP packets, i.e. the packets received by UDP will be output as serial data and (viceversa) incoming serial data will be sent as UDP packets.
+
+[![Animated demo](https://raw.githubusercontent.com/gdelazzari/udpserial/master/assets/demo.mp4)](https://raw.githubusercontent.com/gdelazzari/udpserial/master/assets/demo.mp4)
 
 This project was developed and tested on Linux only.
 
@@ -59,7 +59,7 @@ The daemon can be configured as a systemd service to ensure it is always running
 
 ## Usage
 
-Configure serial tunnels under the *CONFIGURATION* tab, the various options should be self-explanatory. After you added, edited or unlinked ports, clicking on *aPPLY CONFIGURATION* will make the changes effective and persistent, by saving them in a `config.json` file under the current directory.
+Configure serial tunnels under the *CONFIGURATION* tab, the various options should be self-explanatory. After you added, edited or unlinked ports, clicking on *APPLY CONFIGURATION* will make the changes effective and persistent, by saving them in a `config.json` file under the current directory.
 
 The *STATISTICS* tab allows to inspect in real-time the traffic on the various channels, measured in bytes/s.
 
