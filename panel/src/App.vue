@@ -12,8 +12,9 @@
       <div class="uk-navbar-right">
         <div class="uk-navbar-item">
             <div>
-              By Giacomo De Lazzari</br>
-              <a href="mailto:gdelazzari@aol.com">gdelazzari@aol.com</a>
+              Copyright (C) 2022 Giacomo De Lazzari</br>
+              Licensed under <a href="https://www.gnu.org/licenses/">GPL v3</a>, 
+              <a href="https://github.com/gdelazzari/udpserial">GitHub</a>
             </div>
         </div>
       </div>
