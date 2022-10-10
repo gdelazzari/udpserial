@@ -1,8 +1,8 @@
 # udpserial
 
-[![Animated demo](assets/demo.mp4)](assets/demo.mp4)
+![Animated demo](assets/demo.mp4)](assets/demo.mp4)
 
-An UDP ↔ serial port bridge.
+An UDP to serial port bridge.
 
 Allows to tunnel serial ports through UDP packets, i.e. the packets received by UDP will be outputted as serial data and (viceversa) incoming serial data is sent by UDP.
 
