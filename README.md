@@ -1,6 +1,6 @@
 # udpserial
 
-[![Animated demo](https://raw.githubusercontent.com/gdelazzari/udpserial/master/assets/demo.mp4)](https://raw.githubusercontent.com/gdelazzari/udpserial/master/assets/demo.mp4)
+https://user-images.githubusercontent.com/7572780/194914861-afa3c211-2148-4a85-ae79-82a5f8e35ae1.mp4
 
 An UDP to serial port bridge.
 
