@@ -1,6 +1,6 @@
 # udpserial
 
-[![Animated demo](assets/demo.gif)](assets/demo.gif)
+[![Animated demo](assets/demo.mp4)](assets/demo.mp4)
 
 An UDP ↔ serial port bridge.
 
